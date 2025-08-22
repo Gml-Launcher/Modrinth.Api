@@ -7,4 +7,11 @@ namespace Modrinth.Api.Core.Filter
             AddFacet(ProjectFilterTypes.ProjectType, "mod");
         }
     }
+    public class ModPackFilter : ProjectFilter
+    {
+        public ModPackFilter()
+        {
+            AddFacet(ProjectFilterTypes.ProjectType, "modpack");
+        }
+    }
 }

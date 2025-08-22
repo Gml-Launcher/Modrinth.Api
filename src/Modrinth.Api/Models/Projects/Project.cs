@@ -46,7 +46,7 @@ namespace Modrinth.Api.Models.Projects
 
         [JsonPropertyName("downloads")] public int Downloads { get; set; }
 
-        [JsonPropertyName("icon_url")] public string IconUrl { get; set; }
+        [JsonPropertyName("icon_url")] public string? IconUrl { get; set; }
 
         [JsonPropertyName("color")] public int? Color { get; set; }
 
