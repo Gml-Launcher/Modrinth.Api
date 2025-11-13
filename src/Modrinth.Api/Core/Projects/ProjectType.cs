@@ -1,11 +1,10 @@
-namespace Modrinth.Api.Core.Projects
+namespace Modrinth.Api.Core.Projects;
+
+public enum ProjectType
 {
-    public enum ProjectType
-    {
-        Undefined,
-        Mod,
-        ModPack,
-        ResourcePack,
-        Shader
-    }
+    Undefined,
+    Mod,
+    ModPack,
+    ResourcePack,
+    Shader
 }

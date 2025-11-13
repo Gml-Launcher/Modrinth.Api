@@ -1,113 +1,103 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Modrinth.Api.Core.Filter
+namespace Modrinth.Api.Core.Filter;
+
+public class ProjectFilter
 {
-    public class ProjectFilter
+    private readonly ICollection<Facet> _facets = new List<Facet>();
+    public string Query { get; set; }
+    public string Index { get; set; } = FaceIndexEnum.Relevance;
+    public short Offset { get; set; }
+    public short Limit { get; set; } = 20;
+
+    public Facet AddFacet(string key, string value, LogicalOperator logicalOperator = LogicalOperator.And)
     {
-        private ICollection<Facet> _facets = new List<Facet>();
-        public string Query { get; set; }
-        public string Index { get; set; } = FaceIndexEnum.Relevance;
-        public Int16 Offset { get; set; }
-        public Int16 Limit { get; set; } = 20;
+        var element = _facets.FirstOrDefault(c => c.Key == key && c.Value == value);
 
-        public Facet AddFacet(string key, string value, LogicalOperator logicalOperator = LogicalOperator.And)
+        if (element != null) return element;
+
+        var facet = new Facet
         {
-            var element = _facets.FirstOrDefault(c => c.Key == key && c.Value == value);
+            Key = key,
+            Value = value,
+            LogicalOperator = logicalOperator
+        };
 
-            if (element != null) return element;
+        _facets.Add(facet);
 
-            var facet = new Facet
-            {
-                Key = key,
-                Value = value,
-                LogicalOperator = logicalOperator
-            };
-
-            _facets.Add(facet);
-
-            return facet;
-        }
+        return facet;
+    }
 
 
+    public void ToggleFacet(string key, string value, LogicalOperator logicalOperator = LogicalOperator.And)
+    {
+        var element = _facets.FirstOrDefault(c => c.Key == key && c.Value == value);
 
-        public void ToggleFacet(string key, string value, LogicalOperator logicalOperator = LogicalOperator.And)
+        if (element == null)
+            AddFacet(key, value, logicalOperator);
+        else
+            RemoveFacet(key, value);
+    }
+
+    public void RemoveFacet(string key, string value)
+    {
+        var element = _facets.FirstOrDefault(c => c.Key == key && c.Value == value);
+
+        if (element != null) _facets.Remove(element);
+    }
+
+    internal string ToQueryString()
+    {
+        var stringBuilder = new StringBuilder();
+        stringBuilder.AppendJoin(string.Empty, "?query=", Query);
+        stringBuilder.AppendJoin(string.Empty, "&offset=", Offset);
+        stringBuilder.AppendJoin(string.Empty, "&limit=", Limit);
+        stringBuilder.AppendJoin(string.Empty, "&index=", Index);
+
+        if (_facets.Count > 0)
         {
-            var element = _facets.FirstOrDefault(c => c.Key == key && c.Value == value);
-
-            if (element == null)
+            var groupedFacets = _facets.GroupBy(c => new
             {
-                AddFacet(key, value, logicalOperator);
-            }
-            else
+                c.Key, c.LogicalOperator
+            }).ToList();
+
+            stringBuilder.Append("&facets=[");
+
+            var endOrFacets = groupedFacets
+                .Where(c => c.Key.LogicalOperator == LogicalOperator.Or)
+                .ToList();
+
+            if (endOrFacets.Count > 0)
             {
-                RemoveFacet(key, value);
-            }
-        }
-
-        public void RemoveFacet(string key, string value)
-        {
-            var element = _facets.FirstOrDefault(c => c.Key == key && c.Value == value);
-
-            if (element != null)
-            {
-                _facets.Remove(element);
-            }
-        }
-
-        internal string ToQueryString()
-        {
-            var stringBuilder = new StringBuilder();
-            stringBuilder.AppendJoin(string.Empty, "?query=", Query);
-            stringBuilder.AppendJoin(string.Empty, "&offset=", Offset);
-            stringBuilder.AppendJoin(string.Empty, "&limit=", Limit);
-            stringBuilder.AppendJoin(string.Empty, "&index=", Index);
-
-            if (_facets.Count > 0)
-            {
-                var groupedFacets = _facets.GroupBy(c => new
+                foreach (var endOrFacet in endOrFacets)
                 {
-                    c.Key, c.LogicalOperator
-                }).ToList();
+                    stringBuilder.Append("[");
+                    stringBuilder.AppendJoin(',', endOrFacet.Select(c => $"\"{c.Key}:{c.Value}\""));
+                    stringBuilder.Append("],");
+                }
 
-                stringBuilder.Append("&facets=[");
+                stringBuilder.Length--;
+            }
 
-                var endOrFacets = groupedFacets
-                    .Where(c => c.Key.LogicalOperator == LogicalOperator.Or)
-                    .ToList();
 
+            var endAndFacets = groupedFacets
+                .Where(c => c.Key.LogicalOperator == LogicalOperator.And)
+                .SelectMany(c => c)
+                .ToList();
+
+            if (endAndFacets.Count > 0)
+            {
                 if (endOrFacets.Count > 0)
-                {
-                    foreach (var endOrFacet in endOrFacets)
-                    {
-                        stringBuilder.Append("[");
-                        stringBuilder.AppendJoin(',', endOrFacet.Select(c => $"\"{c.Key}:{c.Value}\""));
-                        stringBuilder.Append("],");
-                    }
+                    stringBuilder.Append(",");
 
-                    stringBuilder.Length--;
-                }
-
-
-                var endAndFacets = groupedFacets
-                    .Where(c => c.Key.LogicalOperator == LogicalOperator.And)
-                    .SelectMany(c => c)
-                    .ToList();
-
-                if (endAndFacets.Count > 0)
-                {
-                    if (endOrFacets.Count > 0)
-                        stringBuilder.Append(",");
-
-                    stringBuilder.AppendJoin(",", endAndFacets.Select(c => $"[\"{c.Key}:{c.Value}\"]"));
-                }
-
-                stringBuilder.Append("]");
+                stringBuilder.AppendJoin(",", endAndFacets.Select(c => $"[\"{c.Key}:{c.Value}\"]"));
             }
 
-            return stringBuilder.ToString();
+            stringBuilder.Append("]");
         }
+
+        return stringBuilder.ToString();
     }
 }

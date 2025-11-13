@@ -1,8 +1,7 @@
-namespace Modrinth.Api.Core.Filter
+namespace Modrinth.Api.Core.Filter;
+
+public enum LogicalOperator
 {
-    public enum LogicalOperator
-    {
-        Or,
-        And
-    }
+    Or,
+    And
 }

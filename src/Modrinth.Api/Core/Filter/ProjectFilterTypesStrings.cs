@@ -1,10 +1,9 @@
-namespace Modrinth.Api.Core.Filter
+namespace Modrinth.Api.Core.Filter;
+
+public class ProjectFilterTypesStrings
 {
-    public class ProjectFilterTypesStrings
-    {
-        internal const string Mod = "mod";
-        internal const string Shader = "shader";
-        internal const string ResourcePack = "resourcepack";
-        internal const string ModPack = "modpack";
-    }
+    internal const string Mod = "mod";
+    internal const string Shader = "shader";
+    internal const string ResourcePack = "resourcepack";
+    internal const string ModPack = "modpack";
 }
